@@ -1,0 +1,13 @@
+services:
+  redis:
+    image: redis
+    expose:
+      - 6379
+  counter:
+    image: counter-docker
+    depends_on:
+      - redis 
+    ports:
+      - 8000:8000
+    restart: always
+

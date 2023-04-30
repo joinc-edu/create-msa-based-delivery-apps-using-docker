@@ -1,0 +1,46 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Path(`/whoami`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+
+  redis:
+    image: redis
+    container_name: "redis-service"
+    expose:
+      - 6379
+ 
+  counter:
+    image: counter-docker 
+    container_name: "counter-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.counter.rule=PathPrefix(`/count`)"
+      - "traefik.http.middlewares.strip-counter.stripprefix.prefixes=/count"
+      - "traefik.http.routers.counter.middlewares=strip-counter@docker"
+    depends_on:
+      - redis
+    expose:
+      - 8000
+    restart: always
